@@ -2,6 +2,8 @@ Assets/NRSDK/
 Assets/NRSDK.meta
 Assets/MRLibraryStripConfig.asset
 Assets/MRLibraryStripConfig.asset.meta
+Assets/Plugins/libZenMirrorXrealAir2Lib.aar
+.vscode/
 
 # from https://github.com/github/gitignore/blob/main/Unity.gitignore
 /[Ll]ibrary/

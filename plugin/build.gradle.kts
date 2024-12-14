@@ -18,6 +18,7 @@ fun getLocalProps(key: String, required: Boolean = false): String? {
 android {
     namespace = "net.watasuke.${project.name}"
     compileSdkVersion = "android-31"
+    ndkVersion = getLocalProps("ndk.version") ?: "23.1.7779620"
     defaultConfig {
         minSdk = 31
         externalNativeBuild {
@@ -31,7 +32,7 @@ android {
                 cmake_args += "-DUNITY_PLUGIN_API_DIR:STRING=${unityDir}"
             }
             cmake {
-                cppFlags += listOf("-std=c++23")
+                cppFlags += listOf("-std=c++20")
                 arguments += cmake_args
             }
         }

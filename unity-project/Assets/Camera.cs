@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using NRKernal;
 using UnityEngine;
+using UnityEngine.TextCore;
 
 public enum EyeType
 {
@@ -43,6 +44,11 @@ public class OverrideCamera : MonoBehaviour
   void Update()
   {
     this.cam.transform.position = new Vector3(0.0f, 0.8f, 0.0f);
+    var q = this.cam.transform.rotation;
+    // FIXME: Rotation should be modified for proper view matrix, but why?
+    //        According to the document, Camera.worldToCameraMatrix is following OpenGL convention...
+    this.cam.transform.rotation = new Quaternion(-q.x, -q.y, q.z, q.w);
+
     bool is_succeeded;
     var proj = NRFrame.GetEyeProjectMatrix(out is_succeeded, 0.01f, 100.0f);
     Matrix4x4 proj_mat;
@@ -68,7 +74,8 @@ public class OverrideCamera : MonoBehaviour
       proj_mat[3, 0] = +0.00000f; proj_mat[3, 1] = +0.00000f; proj_mat[3, 2] = -1.00000f; proj_mat[3, 3] = +0.00000f;
     }
 
-    var view_mat = this.cam.worldToCameraMatrix;
+    // use transform.worldToLocalMatrix, not Camera.worldToCameraMatrix
+    var view_mat = this.cam.transform.worldToLocalMatrix;
     SetViewProjectionMat(this.camera_id, //
       view_mat[0, 0], view_mat[0, 1], view_mat[0, 2], view_mat[0, 3], //
       view_mat[1, 0], view_mat[1, 1], view_mat[1, 2], view_mat[1, 3], //
@@ -79,6 +86,7 @@ public class OverrideCamera : MonoBehaviour
       proj_mat[2, 0], proj_mat[2, 1], proj_mat[2, 2], proj_mat[2, 3], //
       proj_mat[3, 0], proj_mat[3, 1], proj_mat[3, 2], proj_mat[3, 3]  //
     );
+    this.cam.transform.rotation = q;
   }
 
   void OnPostRender()

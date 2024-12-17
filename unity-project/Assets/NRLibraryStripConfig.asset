@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ed81adbdfa8b1d40af4f43685818fb5, type: 3}
   m_Name: NRLibraryStripConfig
   m_EditorClassIdentifier: 
-  StripBaseApi: 0
+  StripBaseApi: 1
   StripDualAgentTracking: 0
-  StripHandTracking: 0
-  StripImageTracking: 0
-  StripMeshing: 0
-  StripSpatialAnchor: 0
+  StripHandTracking: 1
+  StripImageTracking: 1
+  StripMeshing: 1
+  StripSpatialAnchor: 1

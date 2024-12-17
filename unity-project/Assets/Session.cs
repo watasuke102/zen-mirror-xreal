@@ -18,8 +18,21 @@ public class Session : MonoBehaviour
     Init();
   }
 
+  int app_clicked = 0;
   void Update()
   {
+    if (NRInput.GetButtonDown(ControllerButton.APP))
+    {
+      ++app_clicked;
+      if (app_clicked >= 3)
+      {
+        Application.Quit();
+      }
+    }
+    else if (NRInput.IsTouching())
+    {
+      app_clicked = 0;
+    }
     GL.IssuePluginEvent(GetUpdateSceneFnPtr(), 0);
   }
 

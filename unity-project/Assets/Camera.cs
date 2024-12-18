@@ -2,7 +2,6 @@ using System;
 using System.Runtime.InteropServices;
 using NRKernal;
 using UnityEngine;
-using UnityEngine.TextCore;
 
 public enum EyeType
 {
@@ -22,16 +21,49 @@ public class OverrideCamera : MonoBehaviour
   [DllImport(Constant.LibName)]
   private static extern void UnregisterCamera(Int32 camera_id);
   [DllImport(Constant.LibName)]
-  private static extern void SetViewProjectionMat(Int32 camera_id,//
-      float v_x0, float v_x1, float v_x2, float v_x3,  //
-      float v_y0, float v_y1, float v_y2, float v_y3,  //
-      float v_z0, float v_z1, float v_z2, float v_z3,  //
-      float v_w0, float v_w1, float v_w2, float v_w3,  //
-      float p_x0, float p_x1, float p_x2, float p_x3,  //
-      float p_y0, float p_y1, float p_y2, float p_y3,  //
-      float p_z0, float p_z1, float p_z2, float p_z3,  //
-      float p_w0, float p_w1, float p_w2, float p_w3   //
+  private static extern void SetViewMat(Int32 camera_id,//
+      float x0, float x1, float x2, float x3,  //
+      float y0, float y1, float y2, float y3,  //
+      float z0, float z1, float z2, float z3,  //
+      float w0, float w1, float w2, float w3   //
   );
+  [DllImport(Constant.LibName)]
+  private static extern void SetProjectionMat(Int32 camera_id,//
+      float x0, float x1, float x2, float x3,  //
+      float y0, float y1, float y2, float y3,  //
+      float z0, float z1, float z2, float z3,  //
+      float w0, float w1, float w2, float w3   //
+  );
+
+  Matrix4x4 GetProjMat()
+  {
+    NativeDevice eye;
+    switch (this.eye_type)
+    {
+      case EyeType.Left: eye = NativeDevice.LEFT_DISPLAY; break;
+      case EyeType.Center: eye = NativeDevice.HEAD_CENTER; break;
+      case EyeType.Right: eye = NativeDevice.RIGHT_DISPLAY; break;
+      default:
+        Debug.LogError($"Invalid eye_type of `{this.name}` : {this.eye_type}");
+        return Matrix4x4.zero;
+    }
+    var fov = new NativeFov4f();
+    NRFrame.GetEyeFov(eye, ref fov);
+
+    const float near = 0.1f, far = 100.0f;
+    float width = fov.right_tan - fov.left_tan;
+    float height = fov.top_tan - fov.bottom_tan;
+    var proj_mat = Matrix4x4.zero;
+    proj_mat[0, 0] = 2.0f / width;
+    proj_mat[0, 2] = (fov.right_tan + fov.left_tan) / width;
+    proj_mat[1, 1] = 2.0f / height;
+    proj_mat[1, 2] = (fov.top_tan + fov.bottom_tan) / height;
+    proj_mat[2, 2] = far / (near - far);
+    proj_mat[2, 3] = (far * near) / (near - far);
+    proj_mat[3, 2] = -1;
+    // var proj_mat = Matrix4x4.Perspective((float)Math.PI / 4.0f, this.cam.pixelWidth / this.cam.pixelHeight, 0.1f, 100.0f);
+    return proj_mat;
+  }
 
   void Start()
   {
@@ -39,11 +71,18 @@ public class OverrideCamera : MonoBehaviour
     var width = this.cam.pixelWidth;
     var height = this.cam.pixelHeight;
     this.camera_id = RegisterCamera(width, height);
+    var proj_mat = GetProjMat();
+    SetProjectionMat(this.camera_id, //
+      proj_mat[0, 0], proj_mat[0, 1], proj_mat[0, 2], proj_mat[0, 3], //
+      proj_mat[1, 0], proj_mat[1, 1], proj_mat[1, 2], proj_mat[1, 3], //
+      proj_mat[2, 0], proj_mat[2, 1], proj_mat[2, 2], proj_mat[2, 3], //
+      proj_mat[3, 0], proj_mat[3, 1], proj_mat[3, 2], proj_mat[3, 3]  //
+    );
     Debug.Log($"[New Camera] {this.cam.name}: pixel={width}x{height}");
   }
   void Update()
   {
-    this.cam.transform.position = new Vector3(0.0f, 0.8f, 0.0f);
+    this.cam.transform.position = new Vector3(0.0f, 0.85f, 0.0f);
     var q = this.cam.transform.rotation;
     // FIXME: Rotation should be modified for proper view matrix, but why?
     //        According to the document, Camera.worldToCameraMatrix is following OpenGL convention...
@@ -76,15 +115,11 @@ public class OverrideCamera : MonoBehaviour
 
     // use transform.worldToLocalMatrix, not Camera.worldToCameraMatrix
     var view_mat = this.cam.transform.worldToLocalMatrix;
-    SetViewProjectionMat(this.camera_id, //
+    SetViewMat(this.camera_id, //
       view_mat[0, 0], view_mat[0, 1], view_mat[0, 2], view_mat[0, 3], //
       view_mat[1, 0], view_mat[1, 1], view_mat[1, 2], view_mat[1, 3], //
       view_mat[2, 0], view_mat[2, 1], view_mat[2, 2], view_mat[2, 3], //
-      view_mat[3, 0], view_mat[3, 1], view_mat[3, 2], view_mat[3, 3],  //
-      proj_mat[0, 0], proj_mat[0, 1], proj_mat[0, 2], proj_mat[0, 3], //
-      proj_mat[1, 0], proj_mat[1, 1], proj_mat[1, 2], proj_mat[1, 3], //
-      proj_mat[2, 0], proj_mat[2, 1], proj_mat[2, 2], proj_mat[2, 3], //
-      proj_mat[3, 0], proj_mat[3, 1], proj_mat[3, 2], proj_mat[3, 3]  //
+      view_mat[3, 0], view_mat[3, 1], view_mat[3, 2], view_mat[3, 3]  //
     );
     this.cam.transform.rotation = q;
   }

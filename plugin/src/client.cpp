@@ -3,7 +3,6 @@
 #include <GLES3/gl3.h>
 
 #include <cstdint>
-#include <cstring>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -75,30 +74,41 @@ Client::UnregisterCamera(int32_t camera_id)
 }
 
 void
-Client::SetViewProjectionMat(int32_t camera_id,      //
-    float v_x0, float v_x1, float v_x2, float v_x3,  //
-    float v_y0, float v_y1, float v_y2, float v_y3,  //
-    float v_z0, float v_z1, float v_z2, float v_z3,  //
-    float v_w0, float v_w1, float v_w2, float v_w3,  //
-    float p_x0, float p_x1, float p_x2, float p_x3,  //
-    float p_y0, float p_y1, float p_y2, float p_y3,  //
-    float p_z0, float p_z1, float p_z2, float p_z3,  //
-    float p_w0, float p_w1, float p_w2, float p_w3   //
+Client::SetViewMat(int32_t camera_id,        //
+    float x0, float x1, float x2, float x3,  //
+    float y0, float y1, float y2, float y3,  //
+    float z0, float z1, float z2, float z3,  //
+    float w0, float w1, float w2, float w3   //
 )
 {
   auto camera_opt = this->TryGetCamera(camera_id);
   if (!camera_opt.has_value()) {
     return;
   }
-  camera_opt->get()->SetViewProjectionMat(  //
-      v_x0, v_x1, v_x2, v_x3,               //
-      v_y0, v_y1, v_y2, v_y3,               //
-      v_z0, v_z1, v_z2, v_z3,               //
-      v_w0, v_w1, v_w2, v_w3,               //
-      p_x0, p_x1, p_x2, p_x3,               //
-      p_y0, p_y1, p_y2, p_y3,               //
-      p_z0, p_z1, p_z2, p_z3,               //
-      p_w0, p_w1, p_w2, p_w3                //
+  camera_opt->get()->SetViewMat(  //
+      x0, x1, x2, x3,             //
+      y0, y1, y2, y3,             //
+      z0, z1, z2, z3,             //
+      w0, w1, w2, w3              //
+  );
+}
+void
+Client::SetProjectionMat(int32_t camera_id,  //
+    float x0, float x1, float x2, float x3,  //
+    float y0, float y1, float y2, float y3,  //
+    float z0, float z1, float z2, float z3,  //
+    float w0, float w1, float w2, float w3   //
+)
+{
+  auto camera_opt = this->TryGetCamera(camera_id);
+  if (!camera_opt.has_value()) {
+    return;
+  }
+  camera_opt->get()->SetProjectionMat(  //
+      x0, x1, x2, x3,                   //
+      y0, y1, y2, y3,                   //
+      z0, z1, z2, z3,                   //
+      w0, w1, w2, w3                    //
   );
 }
 

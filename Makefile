@@ -14,7 +14,9 @@ $(TARGET): $(NRSDK_DIR) $(ZEN_MIRROR_LIB)
 $(ZEN_MIRROR_LIB):
 	cd plugin && ./gradlew deployPlugin
 
-install: $(TARGET)
+# do not set TARGET as a dependency to avoid building
+# try install without building will obviously fail
+install:
 	adb install $(TARGET)
 
 $(NRSDK_DIR):

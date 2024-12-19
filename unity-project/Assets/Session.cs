@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Runtime.InteropServices;
 using NRKernal;
 using UnityEngine;
@@ -11,10 +12,21 @@ public class Session : MonoBehaviour
     this.captureTarget.RequestCapture();
   }
 
-  public static void OnExitButtonClick()
+  System.DateTime prevTapTime = System.DateTime.MinValue;
+  public void OnExitButtonClick()
   {
-    // TODO: show confirmation
-    Application.Quit();
+    var timespan = (System.DateTime.Now - this.prevTapTime).TotalSeconds;
+    if (timespan <= 1)
+    {
+      Application.Quit();
+    }
+    this.prevTapTime = System.DateTime.Now;
+    StartCoroutine(toastCoroutine());
+    IEnumerator toastCoroutine()
+    {
+      yield return new WaitForSeconds(0.5f);
+      AndroidToast.ShowToast($"Double-tap to quit", AndroidToast.ToastDuration.Short);
+    }
   }
 
   [DllImport(Constant.LibName)]

@@ -1,9 +1,7 @@
-Assets/NRSDK/
+Assets/NRSDK/*
 Assets/NRSDK.meta
-Assets/MRLibraryStripConfig.asset
-Assets/MRLibraryStripConfig.asset.meta
-Assets/Plugins/ZenMirrorXrealLib.aar
-Assets/Plugins/ZenMirrorXrealLib.aar.meta
+!Assets/NRSDK/NRKernalSessionConfig.*
+Assets/Plugins/ZenMirrorXrealLib.aar*
 .vscode/
 
 # from https://github.com/github/gitignore/blob/main/Unity.gitignore

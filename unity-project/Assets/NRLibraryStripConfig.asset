@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: NRLibraryStripConfig
   m_EditorClassIdentifier: 
   StripBaseApi: 1
-  StripDualAgentTracking: 0
+  StripDualAgentTracking: 1
   StripHandTracking: 1
   StripImageTracking: 1
   StripMeshing: 1

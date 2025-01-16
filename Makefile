@@ -4,13 +4,15 @@ UNITY_ASSETS_DIR := unity-project/Assets
 NRSDK_DIR        := $(UNITY_ASSETS_DIR)/NRSDK
 ZEN_MIRROR_LIB   := $(UNITY_ASSETS_DIR)/Plugins/ZenMirrorXrealLib.aar
 
-.PHONY: all $(TARGET) $(ZEN_MIRROR_LIB) install
+.PHONY: all apk $(TARGET) plugin $(ZEN_MIRROR_LIB) install
 
 all: $(TARGET) install
 
+apk: $(TARGET)
 $(TARGET): $(NRSDK_DIR) $(ZEN_MIRROR_LIB)
 	$(UNITY_EXECUTABLE) -quit -batchmode -nographics -buildTarget Android -executeMethod Builder.Build -projectPath unity-project
 
+plugin: $(ZEN_MIRROR_LIB)
 $(ZEN_MIRROR_LIB):
 	cd plugin && ./gradlew deployPlugin
 

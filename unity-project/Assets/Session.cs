@@ -25,7 +25,7 @@ public class Session : MonoBehaviour
     IEnumerator toastCoroutine()
     {
       yield return new WaitForSeconds(0.5f);
-      AndroidToast.ShowToast($"Double-tap to quit", AndroidToast.ToastDuration.Short);
+      Android.ShowToast($"Double-tap to quit", Android.ToastDuration.Short);
     }
   }
 

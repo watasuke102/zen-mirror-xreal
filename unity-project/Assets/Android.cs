@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class AndroidToast
+public class Android
 {
   public enum ToastDuration
   {
@@ -48,5 +48,38 @@ public class AndroidToast
         }));
       }
     }
+  }
+
+  public enum DirectoryType
+  {
+    Pictures
+  };
+  public static string GetPublicDir(DirectoryType type_enum)
+  {
+    var type_str = type_enum switch
+    {
+      DirectoryType.Pictures => "DIRECTORY_PICTURES",
+    };
+    string dir;
+    using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+    {
+      using (var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+      {
+        using (var ctx = activity.Call<AndroidJavaObject>("getApplicationContext"))
+        {
+          using (var env = new AndroidJavaClass("android.os.Environment"))
+          {
+            using (var type = env.GetStatic<AndroidJavaObject>(type_str))
+            {
+              using (var path = env.CallStatic<AndroidJavaObject>("getExternalStoragePublicDirectory", type))
+              {
+                dir = path.Call<string>("toString");
+              }
+            }
+          }
+        }
+      }
+    }
+    return dir;
   }
 }

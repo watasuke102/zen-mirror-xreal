@@ -158,38 +158,18 @@ public class OverrideCamera : MonoBehaviour
         tex.Apply();
         RenderTexture.active = prevActiveTex;
 
-        string dst_dir;
-        using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-        {
-          using (var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
-          {
-            using (var ctx = activity.Call<AndroidJavaObject>("getApplicationContext"))
-            {
-              using (var env = new AndroidJavaClass("android.os.Environment"))
-              {
-                using (var type = env.GetStatic<AndroidJavaObject>("DIRECTORY_PICTURES"))
-                {
-                  using (var path = env.CallStatic<AndroidJavaObject>("getExternalStoragePublicDirectory", type))
-                  {
-                    var path_str = path.Call<string>("toString");
-                    dst_dir = $"{path_str}/screenshots";
-                  }
-                }
-              }
-            }
-          }
-        }
+        var dst_dir = $"{Android.GetPublicDir(Android.DirectoryType.Pictures)}/screenshots";
         if (!Directory.Exists(dst_dir))
         {
           Directory.CreateDirectory(dst_dir);
         }
         var filename = $"ZenMirror_{System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss")}.jpg";
         File.WriteAllBytes($"{dst_dir}/{filename}", tex.EncodeToJPG());
-        AndroidToast.ShowToast($"'{filename}' is saved to {dst_dir}");
+        Android.ShowToast($"'{filename}' is saved to {dst_dir}");
       }
       catch (Exception e)
       {
-        AndroidToast.ShowToast($"Failed to save screenshot: {e.Message}");
+        Android.ShowToast($"Failed to save screenshot: {e.Message}");
       }
   }
 }

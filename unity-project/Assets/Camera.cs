@@ -1,8 +1,8 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using NRKernal;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public enum EyeType
 {
@@ -148,28 +148,10 @@ public class OverrideCamera : MonoBehaviour
   void OnRenderImage(RenderTexture src, RenderTexture dst)
   {
     Graphics.Blit(src, dst);
-    if (this.captureRequested) try
-      {
-        this.captureRequested = false;
-        var tex = new Texture2D(src.width, src.height);
-        var prevActiveTex = RenderTexture.active;
-        RenderTexture.active = src;
-        tex.ReadPixels(new Rect(0, 0, src.width, src.height), 0, 0);
-        tex.Apply();
-        RenderTexture.active = prevActiveTex;
-
-        var dst_dir = $"{Android.GetPublicDir(Android.DirectoryType.Pictures)}/screenshots";
-        if (!Directory.Exists(dst_dir))
-        {
-          Directory.CreateDirectory(dst_dir);
-        }
-        var filename = $"ZenMirror_{System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss")}.jpg";
-        File.WriteAllBytes($"{dst_dir}/{filename}", tex.EncodeToJPG());
-        Android.ShowToast($"'{filename}' is saved to {dst_dir}");
-      }
-      catch (Exception e)
-      {
-        Android.ShowToast($"Failed to save screenshot: {e.Message}");
-      }
+    if (this.captureRequested)
+    {
+      this.captureRequested = false;
+      AsyncGPUReadback.Request(src, 0, Session.HandleSaveImage);
+    }
   }
 }

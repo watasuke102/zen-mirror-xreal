@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
+using System.IO;
 using System.Runtime.InteropServices;
 using NRKernal;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class Session : MonoBehaviour
 {
@@ -26,6 +28,35 @@ public class Session : MonoBehaviour
     {
       yield return new WaitForSeconds(0.5f);
       Android.ShowToast($"Double-tap to quit", Android.ToastDuration.Short);
+    }
+  }
+
+  public static void HandleSaveImage(AsyncGPUReadbackRequest req)
+  {
+    if (req.hasError)
+    {
+      Android.ShowToast($"Failed to get image");
+      return;
+    }
+    try
+    {
+      var tex = new Texture2D(req.width, req.height, TextureFormat.ARGB32, false);
+      tex.LoadRawTextureData(req.GetData<Color32>());
+      tex.Apply();
+
+      var dst_dir = $"{Android.GetPublicDir(Android.DirectoryType.Pictures)}/screenshots";
+      if (!Directory.Exists(dst_dir))
+      {
+        Directory.CreateDirectory(dst_dir);
+      }
+      var filename = $"ZenMirror_{System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss")}.jpg";
+      File.WriteAllBytes($"{dst_dir}/{filename}", tex.EncodeToJPG());
+      Android.ShowToast($"'{filename}' is saved to {dst_dir}");
+    }
+    catch (Exception e)
+    {
+      Android.ShowToast($"{e.Message}");
+      Debug.LogError($"Failed to save screenshot: {e.Message}");
     }
   }
 

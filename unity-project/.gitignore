@@ -1,5 +1,7 @@
 Assets/NRSDK/*
 Assets/NRSDK.meta
+Assets/NRSDKExperimental/*
+Assets/NRSDKExperimental.meta
 !Assets/NRSDK/NRKernalSessionConfig.*
 Assets/Plugins/ZenMirrorXrealLib.aar*
 .vscode/

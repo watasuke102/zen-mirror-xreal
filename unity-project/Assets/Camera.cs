@@ -12,6 +12,7 @@ public enum EyeType
 public class OverrideCamera : MonoBehaviour
 {
   [SerializeField] EyeType eye_type;
+  [SerializeField] Server server;
   Camera cam;
   Int32 camera_id = 0;
   Color bgColor = Color.clear;
@@ -164,18 +165,38 @@ public class OverrideCamera : MonoBehaviour
   {
     this.bgColor = c;
   }
-  bool captureRequested = false;
+  enum Status
+  {
+    None, CaptureRequested, Streaming,
+  }
+  Status status;
   public void RequestCapture()
   {
-    this.captureRequested = true;
+    this.status = Status.CaptureRequested;
+  }
+  public void StartStreaming()
+  {
+    this.status = Status.Streaming;
+  }
+  public void StopStreaming()
+  {
+    this.status = Status.None;
   }
   void OnRenderImage(RenderTexture src, RenderTexture dst)
   {
     Graphics.Blit(src, dst);
-    if (this.captureRequested)
+    switch (this.status)
     {
-      this.captureRequested = false;
-      AsyncGPUReadback.Request(src, 0, Session.HandleSaveImage);
+      case Status.CaptureRequested:
+        this.status = Status.None;
+        AsyncGPUReadback.Request(src, 0, Session.HandleSaveImage);
+        break;
+      case Status.Streaming:
+        if (server != null)
+        {
+          AsyncGPUReadback.Request(src, 0, this.server.HandleGetCurrentFrame);
+        }
+        break;
     }
   }
 }

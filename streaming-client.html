@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      * {
+        font-size: 24pt;
+      }
+      form {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        padding-bottom: 16px;
+        gap: 12px;
+        align-items: center;
+      }
+      canvas {
+        border: 1px solid #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="1968" height="1134"></canvas>
+    <form onsubmit="return false" id="form">
+      <label for="server_address">Server Address:</label>
+      <input type="text" id="server_address" value="ws://192.168.11.2:9999" />
+      <button id="connect_button" type="button">Connect</button>
+    </form>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      let ws = null;
+      const serverAddress = document.getElementById("server_address");
+      const connectButton = document.getElementById("connect_button");
+
+      connectButton.addEventListener("click", () => {
+        ws = new WebSocket(serverAddress.value);
+        ws.binaryType = "arraybuffer";
+        ws.onopen = () => {
+          document.getElementById("form").style.display = "none";
+        };
+        ws.onmessage = (event) => {
+          const blob = new Blob([event.data], { type: "image/jpeg" });
+          const url = URL.createObjectURL(blob);
+          const img = new Image();
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+          };
+          img.src = url;
+        };
+        ws.onclose = () => location.reload();
+      });
+    </script>
+  </body>
+</html>

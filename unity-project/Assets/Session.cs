@@ -60,6 +60,17 @@ public class Session : MonoBehaviour
     }
   }
 
+  bool isCameraBgTransparent = true;
+  public void OnContrastButtonClick()
+  {
+    Color c = this.isCameraBgTransparent ? Color.white : Color.clear;
+    foreach (var e in GameObject.FindObjectsByType<OverrideCamera>(FindObjectsSortMode.None))
+    {
+      e.SetBgColor(c);
+    }
+    this.isCameraBgTransparent = !this.isCameraBgTransparent;
+  }
+
   [DllImport(Constant.LibName)]
   private static extern void Init();
   [DllImport(Constant.LibName)]

@@ -14,6 +14,7 @@ public class OverrideCamera : MonoBehaviour
   [SerializeField] EyeType eye_type;
   Camera cam;
   Int32 camera_id = 0;
+  Color bgColor = Color.clear;
 
   [DllImport(Constant.LibName)]
   private static extern IntPtr GetRenderHandlerPtr();
@@ -124,10 +125,9 @@ public class OverrideCamera : MonoBehaviour
     );
     this.cam.transform.rotation = q;
   }
-
   void OnPostRender()
   {
-    GL.Clear(true, true, Color.clear);
+    GL.Clear(true, true, this.bgColor);
     GL.IssuePluginEvent(GetRenderHandlerPtr(), this.camera_id);
   }
 
@@ -140,6 +140,10 @@ public class OverrideCamera : MonoBehaviour
     }
   }
 
+  public void SetBgColor(Color c)
+  {
+    this.bgColor = c;
+  }
   bool captureRequested = false;
   public void RequestCapture()
   {

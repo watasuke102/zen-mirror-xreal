@@ -52,7 +52,7 @@ public class OverrideCamera : MonoBehaviour
     var fov = new NativeFov4f();
     NRFrame.GetEyeFov(eye, ref fov);
 
-    const float near = 0.1f, far = 100.0f;
+    const float near = 0.002f, far = 100.0f;
     float width = fov.right_tan - fov.left_tan;
     float height = fov.top_tan - fov.bottom_tan;
     var proj_mat = Matrix4x4.zero;

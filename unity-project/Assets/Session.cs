@@ -40,7 +40,7 @@ public class Session : MonoBehaviour
     }
     try
     {
-      var tex = new Texture2D(req.width, req.height, TextureFormat.ARGB32, false);
+      var tex = new Texture2D(req.width, req.height, TextureFormat.RGBA32, false);
       tex.LoadRawTextureData(req.GetData<Color32>());
       tex.Apply();
 

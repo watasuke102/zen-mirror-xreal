@@ -79,7 +79,7 @@ public class Session : MonoBehaviour
   private static extern IntPtr GetUpdateSceneFnPtr();
   void Start()
   {
-    NRDebugger.logLevel = LogLevel.Warning;
+    Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
     Init();
     // show status bar; from https://discussions.unity.com/t/how-to-not-cover-up-the-android-ios-top-status-bar-eg-with-time-icons-in-mobile-app/863652/8
     using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))

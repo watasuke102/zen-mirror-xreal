@@ -86,10 +86,21 @@ public class Session : MonoBehaviour
     {
       using (var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
       {
+        activity.Call("runOnUiThread", new AndroidJavaRunnable(set_view));
+      }
+    }
+  }
+  void set_view()
+  {
+    using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+    {
+      using (var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+      {
         using (var window = activity.Call<AndroidJavaObject>("getWindow"))
         {
           using (var Decor = window.Call<AndroidJavaObject>("getDecorView"))
           {
+            Decor.Call("requestPointerCapture");
             using (var controller = Decor.Call<AndroidJavaObject>("getWindowInsetsController"))
             {
               using (var type = new AndroidJavaClass("android.view.WindowInsets$Type"))

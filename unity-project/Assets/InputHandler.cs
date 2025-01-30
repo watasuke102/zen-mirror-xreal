@@ -176,6 +176,7 @@ public class InputHandler : MonoBehaviour
             {
               SendMouseDown();
               this.tapState = TapStatus.TapSent;
+              Android.Vibrate();
             }
             break;
           case TouchPhase.Ended: // Tap duration is less than TapThreshold

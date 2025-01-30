@@ -67,12 +67,19 @@ public class OverrideCamera : MonoBehaviour
     return proj_mat;
   }
 
-  void Start()
+  void InitializeCamera()
   {
-    this.cam = GetComponent<Camera>();
     var width = this.cam.pixelWidth;
     var height = this.cam.pixelHeight;
     this.camera_id = RegisterCamera(width, height);
+    if (this.camera_id == -1)
+    {
+      Debug.LogError($"Failed to initialize camera {this.cam.name}");
+    }
+    else
+    {
+      Debug.Log($"[New Camera] {this.cam.name}: pixel={width}x{height}");
+    }
     var proj_mat = GetProjMat();
     SetProjectionMat(this.camera_id, //
       proj_mat[0, 0], proj_mat[0, 1], proj_mat[0, 2], proj_mat[0, 3], //
@@ -80,10 +87,23 @@ public class OverrideCamera : MonoBehaviour
       proj_mat[2, 0], proj_mat[2, 1], proj_mat[2, 2], proj_mat[2, 3], //
       proj_mat[3, 0], proj_mat[3, 1], proj_mat[3, 2], proj_mat[3, 3]  //
     );
-    Debug.Log($"[New Camera] {this.cam.name}: pixel={width}x{height}");
+  }
+  void Start()
+  {
+    this.cam = GetComponent<Camera>();
+    InitializeCamera();
   }
   void Update()
   {
+    if (this.camera_id == -1)
+    {
+      InitializeCamera();
+      if (this.camera_id == -1)
+      {
+        this.bgColor = Color.red;
+        return;
+      }
+    }
     this.cam.transform.position = new Vector3(0.0f, 0.85f, 0.0f);
     var q = this.cam.transform.rotation;
     // FIXME: Rotation should be modified for proper view matrix, but why?

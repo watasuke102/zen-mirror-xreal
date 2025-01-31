@@ -8,6 +8,10 @@
         font-size: 24pt;
       }
       form {
+        position: fixed;
+        left: 16px;
+        bottom: 16px;
+        width: 95dvw;
         display: grid;
         grid-template-columns: auto 1fr auto;
         padding-bottom: 16px;
@@ -33,24 +37,38 @@
       let ws = null;
       const serverAddress = document.getElementById("server_address");
       const connectButton = document.getElementById("connect_button");
+      let is_succeeded = false;
 
       connectButton.addEventListener("click", () => {
-        ws = new WebSocket(serverAddress.value);
-        ws.binaryType = "arraybuffer";
-        ws.onopen = () => {
-          document.getElementById("form").style.display = "none";
-        };
-        ws.onmessage = (event) => {
-          const blob = new Blob([event.data], { type: "image/jpeg" });
-          const url = URL.createObjectURL(blob);
-          const img = new Image();
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            URL.revokeObjectURL(url);
+        try {
+          ws = new WebSocket(serverAddress.value);
+          ws.binaryType = "arraybuffer";
+          ws.onopen = () => {
+            is_succeeded = true;
+            document.getElementById("form").style.display = "none";
           };
-          img.src = url;
-        };
-        ws.onclose = () => location.reload();
+          ws.onmessage = (event) => {
+            const blob = new Blob([event.data], { type: "image/jpeg" });
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              URL.revokeObjectURL(url);
+            };
+            img.src = url;
+          };
+          ws.onerror = (e) => {
+            alert("Error");
+          };
+          ws.onclose = () => {
+            if (is_succeeded) {
+              location.reload();
+            }
+          };
+        } catch (e) {
+          console.log(`error occured: ${e}`);
+          alert(e.message);
+        }
       });
     </script>
   </body>

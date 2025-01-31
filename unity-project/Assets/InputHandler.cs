@@ -10,7 +10,8 @@ public class InputHandler : MonoBehaviour
 {
   [SerializeField] InputField addressInput;
   private TcpClient client = null;
-  private string clientAddress = "127.0.0.1";
+  // private string clientAddress = "127.0.0.1";
+  private string clientAddress = "192.168.0.9";
   List<byte> data;
 
   public void SetAddress(InputField input)

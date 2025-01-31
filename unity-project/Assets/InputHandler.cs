@@ -21,6 +21,7 @@ public class InputHandler : MonoBehaviour
   void Start()
   {
     data = new List<byte> { };
+    this.addressInput.text = this.clientAddress;
     this.addressInput.onEndEdit.AddListener(delegate { this.SetAddress(this.addressInput); });
     StartCoroutine(TryConnect());
   }
@@ -37,18 +38,20 @@ public class InputHandler : MonoBehaviour
     while (true)
     {
       Debug.Log($"Searching for InputListenServer at {this.clientAddress}:22202");
-      try
+      if (this.client == null)
       {
-        this.client = new TcpClient(this.clientAddress, 22202);
-        _ = ReadStream();
+        this.client = new TcpClient();
+      }
+      var task = this.client.ConnectAsync(this.clientAddress, 22202);
+      var timeout = Task.Delay(500);
+      yield return new WaitUntil(() => task.IsCompleted || timeout.IsCompleted);
+      if (task.IsCompletedSuccessfully)
+      {
         break;
       }
-      catch (Exception)
-      {
-        this.client = null;
-      }
-      yield return new WaitForSeconds(1);
+      yield return new WaitForSeconds(0.5F);
     }
+    _ = ReadStream();
     Debug.Log("Connected");
     this.isSearchingServer = false;
   }

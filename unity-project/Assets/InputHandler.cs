@@ -4,15 +4,24 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InputHandler : MonoBehaviour
 {
+  [SerializeField] InputField addressInput;
   private TcpClient client = null;
+  private string clientAddress = "127.0.0.1";
   List<byte> data;
+
+  public void SetAddress(InputField input)
+  {
+    this.clientAddress = input.text;
+  }
 
   void Start()
   {
     data = new List<byte> { };
+    this.addressInput.onEndEdit.AddListener(delegate { this.SetAddress(this.addressInput); });
     StartCoroutine(TryConnect());
   }
 
@@ -27,10 +36,10 @@ public class InputHandler : MonoBehaviour
     this.isSearchingServer = true;
     while (true)
     {
-      Debug.Log("Searching for InputListenServer");
+      Debug.Log($"Searching for InputListenServer at {this.clientAddress}:22202");
       try
       {
-        this.client = new TcpClient("127.0.0.1", 22202);
+        this.client = new TcpClient(this.clientAddress, 22202);
         _ = ReadStream();
         break;
       }

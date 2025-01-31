@@ -19,7 +19,7 @@ $(ZEN_MIRROR_LIB):
 # do not set TARGET as a dependency to avoid building
 # try install without building will obviously fail
 install:
-	adb install $(TARGET)
+	adb -d install $(TARGET)
 
 $(NRSDK_DIR):
 	$(error "NRSDK is not imported; open `unity-project` directory with Unity and import NRSDK unitypackage.")

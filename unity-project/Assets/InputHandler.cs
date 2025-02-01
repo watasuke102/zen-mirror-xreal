@@ -25,6 +25,14 @@ public class InputHandler : MonoBehaviour
     this.addressInput.onEndEdit.AddListener(delegate { this.SetAddress(this.addressInput); });
     StartCoroutine(TryConnect());
   }
+  void OnDestroy()
+  {
+    Debug.Log("closing...");
+    if (this.client != null && this.client.Connected)
+    {
+      this.client.Close();
+    }
+  }
 
   bool isSearchingServer = false;
   IEnumerator TryConnect()
@@ -88,13 +96,26 @@ public class InputHandler : MonoBehaviour
     stream.Write(buf.ToArray(), 0, buf.Count);
     stream.Flush();
   }
-  void SendMouseDown()
+  void SendMouseMove(float x, float y)
   {
-    SendData(2, BitConverter.GetBytes((UInt32)0));
+    data.AddRange(BitConverter.GetBytes(x));
+    data.AddRange(BitConverter.GetBytes(y));
+    SendData(1, data.ToArray());
+    data.Clear();
   }
-  void SendMouseUp()
+
+  enum MouseButton
   {
-    SendData(3, BitConverter.GetBytes((UInt32)0));
+    Left = 0x110,
+    Right = 0x111,
+  }
+  void SendMouseDown(MouseButton b)
+  {
+    SendData(2, BitConverter.GetBytes((UInt32)b));
+  }
+  void SendMouseUp(MouseButton b)
+  {
+    SendData(3, BitConverter.GetBytes((UInt32)b));
   }
 
   void FixedUpdate()
@@ -119,53 +140,70 @@ public class InputHandler : MonoBehaviour
   }
   void HandleMouse()
   {
-    if (Input.touchCount == 0)
+    if (Input.touchCount != 0)
     {
-      if (Input.GetMouseButtonDown(0))
-      {
-        SendMouseDown();
-      }
-      else if (Input.GetMouseButtonUp(0))
-      {
-        SendMouseUp();
-      }
+      return;
+    }
+    if (Input.GetMouseButtonDown(0))
+    {
+      SendMouseDown(MouseButton.Left);
+    }
+    else if (Input.GetMouseButtonUp(0))
+    {
+      SendMouseUp(MouseButton.Left);
+    }
+    if (Input.GetMouseButtonDown(1))
+    {
+      SendMouseDown(MouseButton.Right);
+    }
+    else if (Input.GetMouseButtonUp(1))
+    {
+      SendMouseUp(MouseButton.Right);
     }
 
     float x = Input.GetAxisRaw("Mouse X");
     float y = Input.GetAxisRaw("Mouse Y");
-    if (x == 0.0F && y == 0.0F)
+    if (x != 0.0F || y != 0.0F)
     {
-      return;
+      SendMouseMove(x, y);
     }
-    data.AddRange(BitConverter.GetBytes(x));
-    data.AddRange(BitConverter.GetBytes(y));
-    SendData(1, data.ToArray());
-    data.Clear();
   }
 
   enum TapStatus
   {
     Idle,
     Pending, // until TapThresholdSec passed from `Began` received
-    MoveOnly, // down event is not sent
-    TapSent,
+    LongTap,
+    MoveOnly, // down event is not sent at the begenning
+    Drag,
+    Scroll,
   }
   TapStatus tapState = TapStatus.Idle;
   const float TapThresholdSec = 0.2F;
   float passedSecFromBegan = 0.0F;
   void HandleTap()
   {
-    IEnumerator SendMouseUpAfterPassedSec()
+    IEnumerator SendMouseUpAfterDelay(MouseButton b, float delay)
     {
-      yield return new WaitForSeconds(this.passedSecFromBegan);
-      SendMouseUp();
+      yield return new WaitForSeconds(delay);
+      SendMouseUp(b);
     }
 
     var phase = TouchPhase.Ended;
     if (Input.touchCount > 0)
     {
-      phase = Input.GetTouch(0).phase;
+      var touch = Input.GetTouch(0);
+      phase = touch.phase;
+      if (phase == TouchPhase.Moved && touch.deltaPosition.sqrMagnitude <= 2.0F)
+      {
+        phase = TouchPhase.Stationary; // discard small movement
+      }
     }
+    if (phase == TouchPhase.Canceled)
+    {
+      phase = TouchPhase.Ended;
+    }
+
     switch (this.tapState)
     {
       case TapStatus.Idle:
@@ -174,9 +212,18 @@ public class InputHandler : MonoBehaviour
           this.tapState = TapStatus.Pending;
           this.passedSecFromBegan = 0.0F;
         }
+        if (phase == TouchPhase.Moved)
+        {
+          this.tapState = TapStatus.MoveOnly;
+        }
         break;
 
       case TapStatus.Pending:
+        if (Input.touchCount >= 2)
+        {
+          this.tapState = TapStatus.Scroll;
+          break;
+        }
         switch (phase)
         {
           case TouchPhase.Moved:
@@ -184,50 +231,77 @@ public class InputHandler : MonoBehaviour
             break;
           case TouchPhase.Stationary:
             this.passedSecFromBegan += Time.deltaTime;
-            if (this.passedSecFromBegan > TapThresholdSec) // Long tap (drag)
+            if (this.passedSecFromBegan > TapThresholdSec) // Long tap
             {
-              SendMouseDown();
-              this.tapState = TapStatus.TapSent;
+              this.tapState = TapStatus.LongTap;
               Android.Vibrate();
             }
             break;
           case TouchPhase.Ended: // Tap duration is less than TapThreshold
-            SendMouseDown();
-            StartCoroutine(SendMouseUpAfterPassedSec());
+            SendMouseDown(MouseButton.Left);
+            StartCoroutine(SendMouseUpAfterDelay(MouseButton.Left, this.passedSecFromBegan));
             this.tapState = TapStatus.Idle;
             break;
-          case TouchPhase.Canceled:
-            this.tapState = TapStatus.Idle;
-            break;
+        }
+        break;
+
+      case TapStatus.LongTap:
+        if (phase == TouchPhase.Moved)
+        {
+          SendMouseDown(MouseButton.Left); // start dragging
+          this.tapState = TapStatus.Drag;
+        }
+        else if (phase == TouchPhase.Ended)
+        {
+          SendMouseDown(MouseButton.Right);
+          SendMouseUpAfterDelay(MouseButton.Right, 0.2F);
+          this.tapState = TapStatus.Idle;
+        }
+        else if (Input.touchCount >= 2)
+        {
+          this.tapState = TapStatus.Scroll;
         }
         break;
 
       case TapStatus.MoveOnly:
-        if (phase == TouchPhase.Canceled || phase == TouchPhase.Ended)
+        if (phase == TouchPhase.Moved)
+        {
+          var v = Input.GetTouch(0).deltaPosition;
+          SendMouseMove(v.x, v.y);
+        }
+        else if (phase == TouchPhase.Ended)
         {
           this.tapState = TapStatus.Idle;
         }
-        break;
-      case TapStatus.TapSent:
-        if (phase == TouchPhase.Canceled)
+        else if (Input.touchCount >= 2)
         {
-          this.tapState = TapStatus.Idle;
+          this.tapState = TapStatus.Scroll;
+        }
+        break;
+      case TapStatus.Drag:
+        if (phase == TouchPhase.Moved)
+        {
+          var v = Input.GetTouch(0).deltaPosition;
+          SendMouseMove(v.x, v.y);
         }
         if (phase == TouchPhase.Ended)
         {
-          SendMouseUp();
+          SendMouseUp(MouseButton.Left);
           this.tapState = TapStatus.Idle;
         }
         break;
-    }
-  }
 
-  void OnDestroy()
-  {
-    Debug.Log("closing...");
-    if (this.client != null && this.client.Connected)
-    {
-      this.client.Close();
+      case TapStatus.Scroll:
+        if (phase == TouchPhase.Moved)
+        {
+          var delta = Input.GetTouch(0).deltaPosition;
+          SendData(4, BitConverter.GetBytes(delta.sqrMagnitude * (delta.y < 0 ? -1.0F : 1.0F)));
+        }
+        else if (Input.touchCount < 2)
+        {
+          this.tapState = TapStatus.Idle;
+        }
+        break;
     }
   }
 }
